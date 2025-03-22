@@ -50,3 +50,17 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO reader;
 -- Run this command after the initial data migration has been completed
 GRANT USAGE ON SCHEMA sign TO reader;
 ```
+
+### Create Users
+Create users that will be used to access the database and grant them the appropriate roles.  For examples:
+
+```sql
+CREATE USER rsp_admin WITH PASSWORD 'password';
+GRANT admin TO rsp_admin;
+
+CREATE USER rsp_editor WITH PASSWORD 'password';
+GRANT editor TO rsp_editor;
+
+CREATE USER rsp_reader WITH PASSWORD 'password';
+GRANT reader TO rsp_reader;
+```
