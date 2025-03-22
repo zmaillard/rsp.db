@@ -1,0 +1,16 @@
+name: Deploy Database Changes
+on: [push]
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '^1.24.0'
+      - run: go install github.com/pressly/goose/v3/cmd/goose@latest
+      - run: goose status
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./sql/migrations/
+          GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}
