@@ -1,5 +1,8 @@
 name: Deploy Database Changes
-on: [push]
+on:
+  push:
+    branches:
+      - main
 jobs:
   upgrade:
     runs-on: ubuntu-latest
