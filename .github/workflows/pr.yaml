@@ -1,10 +1,10 @@
-name: Deploy Database Changes
+name: Validate Database Changes
 on:
-  push:
+  pull_request:
     branches:
       - main
 jobs:
-  upgrade:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,7 +17,7 @@ jobs:
           GOOSE_DRIVER: postgres
           GOOSE_MIGRATION_DIR: ./migrations/
           GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}
-      - run: goose up
+      - run: goose validate
         env:
           GOOSE_DRIVER: postgres
           GOOSE_MIGRATION_DIR: ./migrations/
