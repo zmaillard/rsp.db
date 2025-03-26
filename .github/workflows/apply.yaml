@@ -14,3 +14,8 @@ jobs:
           GOOSE_DRIVER: postgres
           GOOSE_MIGRATION_DIR: ./migrations/
           GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}
+      - run: goose up
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}
