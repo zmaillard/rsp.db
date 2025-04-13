@@ -17,9 +17,15 @@ CREATE TABLE sign.feature_highway_name (
     highway_name_id integer constraint feature_highway_name_highway_name_id_fk references sign.highway_name
 );
 
+ALTER TABLE sign.feature_link
+ADD COLUMN highway_name_id INTEGER CONSTRAINT feature_link_highway_name__fk references sign.highway_name (id);
+
 -- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
+ALTER TABLE sign.feature_link
+DROP COLUMN highway_name_id;
+
 DROP TABLE sign.feature_highway_name;
 
 DROP TABLE sign.highway_highway_name;
