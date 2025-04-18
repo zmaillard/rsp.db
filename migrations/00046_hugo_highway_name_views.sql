@@ -128,11 +128,33 @@ FROM
              LEFT JOIN sign.admin_area_country c ON f.admin_area_country_id = c.id
              LEFT JOIN sign.admin_area_state s ON f.admin_area_state_id = s.id;
 
+
+ create or replace view sign.vwhugofeaturelink (id, from_feature, to_feature, road_name, highways, to_point, from_point, highway_name) as
+ SELECT fl.id,
+        fl.from_feature,
+        fl.to_feature,
+        fl.road_name,
+        cast(highways.highways as text[]) as highways,
+        cast(tf.point as geometry) AS to_point,
+        cast(ff.point AS geometry)  AS from_point,
+        hn.name as highway_name
+ FROM sign.feature_link fl
+         LEFT JOIN sign.highway_name hn ON fl.highway_name_id = hn.id
+          LEFT JOIN sign.feature tf ON fl.to_feature = tf.id
+          LEFT JOIN sign.feature ff ON fl.from_feature = ff.id
+          LEFT JOIN (SELECT flh.feature_link_id,
+                            array_agg(h.slug) AS highways
+                     FROM sign.feature_link_highway flh
+                              JOIN sign.highway h ON flh.highway_id = h.id
+                     GROUP BY flh.feature_link_id) highways ON fl.id = highways.feature_link_id;
+
+
 -- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
 DROP view sign.vwhugofeature;
 DROP view sign.vwhugostate;
+DROP view sign.vwhugofeaturelink;
 
 create view sign.vwhugostate
             (id, state_name, state_slug, subdivision_name, image_count, highways, places, counties, featured,
@@ -196,5 +218,23 @@ FROM sign.admin_area_state state
                              GROUP BY hs.feature_id) signs ON f.id = signs.feature_id
                   LEFT JOIN sign.admin_area_country c ON f.admin_area_country_id = c.id
                   LEFT JOIN sign.admin_area_state s ON f.admin_area_state_id = s.id;
+
+
+         create view sign.vwhugofeaturelink (id, from_feature, to_feature, road_name, highways, to_point, from_point) as
+                  SELECT fl.id,
+                         fl.from_feature,
+                         fl.to_feature,
+                         fl.road_name,
+                         cast(highways.highways as text[]) as highways,
+                         cast(tf.point as geometry) AS to_point,
+                         cast(ff.point AS geometry)  AS from_point
+                  FROM sign.feature_link fl
+                           LEFT JOIN sign.feature tf ON fl.to_feature = tf.id
+                           LEFT JOIN sign.feature ff ON fl.from_feature = ff.id
+                           LEFT JOIN (SELECT flh.feature_link_id,
+                                             array_agg(h.slug) AS highways
+                                      FROM sign.feature_link_highway flh
+                                               JOIN sign.highway h ON flh.highway_id = h.id
+                                      GROUP BY flh.feature_link_id) highways ON fl.id = highways.feature_link_id;
 
 -- +goose StatementEnd
