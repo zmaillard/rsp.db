@@ -1,4 +1,4 @@
-FROM ghcr.io/baosystems/postgis:15-3.5-alpine AS roadsign-preseed
+FROM ghcr.io/baosystems/postgis:15-3.5 AS roadsign-preseed
 
 COPY *.sql /docker-entrypoint-initdb.d
 
@@ -10,7 +10,7 @@ ENV POSTGRES_USER admin
 
 RUN /docker-entrypoint.sh postgres
 
-FROM ghcr.io/baosystems/postgis:15-3.5-alpine
+FROM ghcr.io/baosystems/postgis:15-3.5
 COPY --from=roadsign-preseed /var/lib/postgresql/data /var/lib/postgresql/data
 
 
