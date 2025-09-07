@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 create or replace view sign.vwhugohighway
             (id, highway_name, slug, sort_number, image_name, highway_type_slug, highway_type_name, states, counties,
-             places, previous_features, next_features, display_name, external_link)
+             places, previous_features, next_features, display_name, external_link, named_highways)
 as
 SELECT hwy.id,
        hwy.highway_name,
@@ -18,7 +18,7 @@ SELECT hwy.id,
        features.tofeat       AS next_features,
        hwy.display_name      AS display_name,
        hwy.external_link     AS external_link,
-       names.name            AS highway_name
+       names.name            AS named_highways
 FROM sign.highway hwy
          JOIN sign.highway_type ht ON hwy.highway_type_id = ht.id
          LEFT JOIN (SELECT h.id,
