@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Postgres Dump Backup
+      - name: Postgres Dump Backup (Sign Schema)
         uses: tj-actions/pg-dump@v3
         with:
           database_url: ${{ secrets.GOOSE_DBSTRING }}
@@ -28,8 +28,19 @@ jobs:
           path: "01_backup.sql"
           options: "-O -x -n sign -e postgis -e unaccent"
 
-      - name: Remove Meta Commands
-        run: sed '/^\\restrict /d;/^\\unrestrict /d' 01_backup.sql > 01_backup.sql.tmp && mv 01_backup.sql.tmp 01_backup.sql
+      - name: Postgres Dump Backup (Goose)
+        uses: tj-actions/pg-dump@v3
+        with:
+          database_url: ${{ secrets.GOOSE_DBSTRING }}
+          postgresql_version: "15"
+          path: "01_goose.sql"
+          options: "-O -x -t public.goose_db_version"
+
+      - name: Combine Backups and Remove Meta Commands
+        run: cat 01_backup.sql 01_goose.sql | sed '/^\\restrict /d;/^\\unrestrict /d'  > 01_backup.sql.tmp && mv 01_backup.sql.tmp 01_backup.sql
+
+      - name: Remove Goose Backup
+        run: rm 01_goose.sql
 
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@v3
