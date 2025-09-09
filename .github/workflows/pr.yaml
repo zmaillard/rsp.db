@@ -6,6 +6,16 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: ghcr.io/zmaillard/rsp.db:latest
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: rsp
+          POSTGRES_DB: roadsign
+          POSTGRES_HOST: localhost
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
