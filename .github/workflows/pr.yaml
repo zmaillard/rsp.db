@@ -32,3 +32,21 @@ jobs:
           GOOSE_DRIVER: postgres
           GOOSE_MIGRATION_DIR: ./migrations/
           GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}
+      - run: goose status
+        name: Goose Status (Local Backup)
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: postgres://admin:rsp@localhost:5432/roadsign
+      - run: goose validate
+        name: Goose Validate (Local Backup)
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: postgres://admin:rsp@localhost:5432/roadsign
+      - run: goose up
+        name: Goose Up (Local Backup)
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: postgres://admin:rsp@localhost:5432/roadsign
