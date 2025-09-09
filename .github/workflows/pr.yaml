@@ -6,6 +6,16 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: ghcr.io/zmaillard/rsp.db:latest
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: rsp
+          POSTGRES_DB: roadsign
+          POSTGRES_HOST: localhost
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
@@ -22,3 +32,21 @@ jobs:
           GOOSE_DRIVER: postgres
           GOOSE_MIGRATION_DIR: ./migrations/
           GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}
+      - run: goose status
+        name: Goose Status (Local Backup)
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: postgres://admin:rsp@localhost:5432/roadsign
+      - run: goose validate
+        name: Goose Validate (Local Backup)
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: postgres://admin:rsp@localhost:5432/roadsign
+      - run: goose up
+        name: Goose Up (Local Backup)
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_MIGRATION_DIR: ./migrations/
+          GOOSE_DBSTRING: postgres://admin:rsp@localhost:5432/roadsign
