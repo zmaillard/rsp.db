@@ -43,7 +43,7 @@ jobs:
         run: rm 01_goose.sql
 
       - name: Setup Docker
-        uses: crazy-max/ghaction-setup-docker@v3
+        uses: docker/setup-docker-action@v4
         with:
           daemon-config: |
             {
