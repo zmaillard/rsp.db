@@ -1,0 +1,123 @@
+-- +goose Up
+-- +goose StatementBegin
+DROP VIEW sign.vwhugohighway;
+create or replace view sign.vwhugohighway
+            (id, highway_name, slug, sort_number, image_name, child_highways, parent_highway, highway_type_slug, highway_type_name, states, counties,
+             places, previous_features, next_features, display_name, external_link, named_highways)
+as
+SELECT hwy.id,
+       hwy.highway_name,
+       hwy.slug,
+       hwy.sort_number,
+       hwy.image_name,
+       hwy_children.child  AS child_highways,
+       par.slug             as parent_highway,
+       ht.slug               AS highway_type_slug,
+       ht.highway_type_name,
+       hwyplaces.allstates   AS states,
+       hwyplaces.allcounties AS counties,
+       hwyplaces.allplaces   AS places,
+       features.fromfeat     AS previous_features,
+       features.tofeat       AS next_features,
+       hwy.display_name      AS display_name,
+       hwy.external_link     AS external_link,
+       names.name            AS named_highways
+FROM sign.highway hwy
+         JOIN sign.highway_type ht ON hwy.highway_type_id = ht.id
+         LEFT JOIN sign.highway par ON hwy.highway_parent_id = par.id
+         LEFT JOIN(SELECT ch.highway_parent_id, array_agg(ch.slug) as child from sign.highway ch GROUP BY ch.highway_parent_id) hwy_children
+             ON hwy.id = hwy_children.highway_parent_id
+         LEFT JOIN (SELECT h.id,
+                           array_agg(orf.prev_feat) AS fromfeat,
+                           array_agg(orf.next_feat) AS tofeat
+                    FROM sign.highway h,
+                         LATERAL sign.get_first_highway(h.id) gf(prev_feat, next_feat),
+                         LATERAL sign.get_ordered_features(h.id, gf.prev_feat) orf(prev_feat, next_feat)
+                    GROUP BY h.id) features ON hwy.id = features.id
+         LEFT JOIN (select highway_highway_name.highway_id, array_agg(sign.slugify(highway_name.name)) as name
+                    from sign.highway_highway_name
+                             inner join sign.highway_name on sign.highway_highway_name.highway_name_id = sign.highway_name.id
+                    group by highway_highway_name.highway_id
+) names ON hwy.id = names.highway_id
+         LEFT JOIN (SELECT hs.highway_id,
+                           array_agg(DISTINCT places.slug) FILTER (WHERE places.slug IS NOT NULL)     AS allplaces,
+                           array_agg(DISTINCT states.slug) FILTER (WHERE states.slug IS NOT NULL)     AS allstates,
+                           array_agg(DISTINCT counties.slug) FILTER (WHERE counties.slug IS NOT NULL) AS allcounties
+                    FROM sign.highwaysign_highway hs
+                             JOIN sign.highwaysign h ON h.id = hs.highwaysign_id
+                             LEFT JOIN (SELECT place.id                                            AS pid,
+                                               (state.slug::text || '_'::text) || place.slug::text AS slug
+                                        FROM sign.admin_area_place place
+                                                 JOIN sign.admin_area_state state ON place.admin_area_stateid = state.id) places
+                                       ON h.admin_area_place_id = places.pid
+                             LEFT JOIN (SELECT county.id                                            AS cid,
+                                               (state.slug::text || '_'::text) || county.slug::text AS slug
+                                        FROM sign.admin_area_county county
+                                                 JOIN sign.admin_area_state state ON county.admin_area_stateid = state.id) counties
+                                       ON h.admin_area_county_id = counties.cid
+                             LEFT JOIN sign.admin_area_state states ON h.admin_area_state_id = states.id
+                    GROUP BY hs.highway_id) hwyplaces ON hwy.id = hwyplaces.highway_id
+WHERE hwyplaces.allstates IS NOT NULL;
+
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP VIEW sign.vwhugohighway;
+create or replace view sign.vwhugohighway
+            (id, highway_name, slug, sort_number, image_name, child_highways, parent_highway, highway_type_slug, highway_type_name, states, counties,
+             places, previous_features, next_features, display_name, external_link, named_highways)
+as
+SELECT hwy.id,
+       hwy.highway_name,
+       hwy.slug,
+       hwy.sort_number,
+       hwy.image_name,
+       hwy_children.child  AS child_highways,
+       hwy.highway_parent_id AS parent_highway,
+       ht.slug               AS highway_type_slug,
+       ht.highway_type_name,
+       hwyplaces.allstates   AS states,
+       hwyplaces.allcounties AS counties,
+       hwyplaces.allplaces   AS places,
+       features.fromfeat     AS previous_features,
+       features.tofeat       AS next_features,
+       hwy.display_name      AS display_name,
+       hwy.external_link     AS external_link,
+       names.name            AS named_highways
+FROM sign.highway hwy
+         JOIN sign.highway_type ht ON hwy.highway_type_id = ht.id
+         LEFT JOIN(SELECT ch.highway_parent_id, array_agg(id) as child from sign.highway ch GROUP BY ch.highway_parent_id) hwy_children
+             ON hwy.id = hwy_children.highway_parent_id
+         LEFT JOIN (SELECT h.id,
+                           array_agg(orf.prev_feat) AS fromfeat,
+                           array_agg(orf.next_feat) AS tofeat
+                    FROM sign.highway h,
+                         LATERAL sign.get_first_highway(h.id) gf(prev_feat, next_feat),
+                         LATERAL sign.get_ordered_features(h.id, gf.prev_feat) orf(prev_feat, next_feat)
+                    GROUP BY h.id) features ON hwy.id = features.id
+         LEFT JOIN (select highway_highway_name.highway_id, array_agg(sign.slugify(highway_name.name)) as name
+                    from sign.highway_highway_name
+                             inner join sign.highway_name on sign.highway_highway_name.highway_name_id = sign.highway_name.id
+                    group by highway_highway_name.highway_id
+) names ON hwy.id = names.highway_id
+         LEFT JOIN (SELECT hs.highway_id,
+                           array_agg(DISTINCT places.slug) FILTER (WHERE places.slug IS NOT NULL)     AS allplaces,
+                           array_agg(DISTINCT states.slug) FILTER (WHERE states.slug IS NOT NULL)     AS allstates,
+                           array_agg(DISTINCT counties.slug) FILTER (WHERE counties.slug IS NOT NULL) AS allcounties
+                    FROM sign.highwaysign_highway hs
+                             JOIN sign.highwaysign h ON h.id = hs.highwaysign_id
+                             LEFT JOIN (SELECT place.id                                            AS pid,
+                                               (state.slug::text || '_'::text) || place.slug::text AS slug
+                                        FROM sign.admin_area_place place
+                                                 JOIN sign.admin_area_state state ON place.admin_area_stateid = state.id) places
+                                       ON h.admin_area_place_id = places.pid
+                             LEFT JOIN (SELECT county.id                                            AS cid,
+                                               (state.slug::text || '_'::text) || county.slug::text AS slug
+                                        FROM sign.admin_area_county county
+                                                 JOIN sign.admin_area_state state ON county.admin_area_stateid = state.id) counties
+                                       ON h.admin_area_county_id = counties.cid
+                             LEFT JOIN sign.admin_area_state states ON h.admin_area_state_id = states.id
+                    GROUP BY hs.highway_id) hwyplaces ON hwy.id = hwyplaces.highway_id
+WHERE hwyplaces.allstates IS NOT NULL;
+-- +goose StatementEnd
