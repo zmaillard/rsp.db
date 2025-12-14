@@ -73,6 +73,35 @@ FROM sign.admin_area_state state
                         inner join sign.feature tf on tf.id = feature_link.to_feature) i
             group by admin_area_state_id)  names ON state.id = names.stateid
          JOIN sign.admin_area_country c ON state.adminarea_country_id = c.id;
+
+DROP VIEW sign.vwhugofeature;
+create view sign.vwhugofeature
+            (id, point, name, signs, state_name, state_slug, country_name, country_slug, highway_names) as
+SELECT f.id,
+       f.point,
+       f.name,
+       signs.signs,
+       s.name          AS state_name,
+       s.slug          AS state_slug,
+       c.name          AS country_name,
+       c.slug          AS country_slug,
+       names.hwy_names AS highway_names
+FROM sign.feature f
+         LEFT JOIN (SELECT hs.feature_id,
+                           array_agg(hs.imageid::text) AS signs
+                    FROM sign.highwaysign hs
+                    GROUP BY hs.feature_id) signs ON f.id = signs.feature_id
+        LEFT JOIN ( select feature_id, array_agg(distinct sign.slugify(hn)) as hwy_names from (select feature_link.to_feature as feature_id, highway_name.name as hn
+               from sign.feature_link
+                        inner join sign.highway_name on feature_link.highway_name_id = highway_name.id
+               UNION ALL
+               select feature_link.from_feature as feature_id, highway_name.name as hn
+               from sign.feature_link
+                        inner join sign.highway_name on feature_link.highway_name_id = highway_name.id) i
+            group by feature_id) names ON f.id = names.feature_id
+         LEFT JOIN sign.admin_area_country c ON f.admin_area_country_id = c.id
+         LEFT JOIN sign.admin_area_state s ON f.admin_area_state_id = s.id;
+
 -- +goose StatementEnd
 
 -- +goose Down
@@ -146,4 +175,33 @@ FROM sign.admin_area_state state
                              INNER JOIN sign.highway_name hn on fhn.highway_name_id = hn.id
                     GROUP BY f.admin_area_state_id) names ON state.id = names.stateid
          JOIN sign.admin_area_country c ON state.adminarea_country_id = c.id;
+
+
+
+DROP VIEW sign.vwhugofeature;
+create view sign.vwhugofeature
+            (id, point, name, signs, state_name, state_slug, country_name, country_slug, highway_names) as
+SELECT f.id,
+       f.point,
+       f.name,
+       signs.signs,
+       s.name          AS state_name,
+       s.slug          AS state_slug,
+       c.name          AS country_name,
+       c.slug          AS country_slug,
+       names.hwy_names AS highway_names
+FROM sign.feature f
+         LEFT JOIN (SELECT hs.feature_id,
+                           array_agg(hs.imageid::text) AS signs
+                    FROM sign.highwaysign hs
+                    GROUP BY hs.feature_id) signs ON f.id = signs.feature_id
+         LEFT JOIN (SELECT fhn.feature_id,
+                           array_agg(DISTINCT sign.slugify(hn.name)) AS hwy_names
+                    FROM sign.feature_highway_name fhn
+                             JOIN sign.highway_name hn ON fhn.highway_name_id = hn.id
+                    GROUP BY fhn.feature_id) names ON f.id = names.feature_id
+         LEFT JOIN sign.admin_area_country c ON f.admin_area_country_id = c.id
+         LEFT JOIN sign.admin_area_state s ON f.admin_area_state_id = s.id;
+
+
 -- +goose StatementEnd
