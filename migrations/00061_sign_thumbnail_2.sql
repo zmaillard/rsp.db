@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE sign.highwaysign
-ADD COLUMN thumbnail VARCHAR(max);
+ADD COLUMN thumbnail text;
 
 DROP VIEW IF EXISTS sign.vwhugohighwaysign;
 create view sign.vwhugohighwaysign
